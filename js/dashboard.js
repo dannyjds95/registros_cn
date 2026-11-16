@@ -87,10 +87,9 @@ function aplicarFiltros() {
 }
 
 // Sección 1: Estado de Aportaciones del usuario actual que inició sesión
+// Sección 1: Estado de Aportaciones del usuario actual que inició sesión
 function actualizarEstadoDeuda() {
   const VALOR_CUOTA = 5;
-  const ANIO_INICIO = 2023;
-  const MES_INICIO = 7; // Agosto (en JavaScript Enero = 0, Agosto = 7)
 
   const mesesNombres = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -100,7 +99,18 @@ function actualizarEstadoDeuda() {
   const idActual = String(userData.id_us);
   const nombreActual = userData.us_nombre || userData.us_user;
 
-  // Calcular total de meses transcurridos desde Agosto 2023 hasta el mes actual
+  // Inicio en Enero 2026 solo para el usuario con ID 30010; Agosto 2023 para los demás
+  const esUsuario2026 = idActual === '30010';
+  const ANIO_INICIO = esUsuario2026 ? 2026 : 2023;
+  const MES_INICIO = esUsuario2026 ? 0 : 7; // 0 = Enero, 7 = Agosto
+
+  // Actualizar subtítulo de la tarjeta según la fecha de inicio del usuario
+  const elSubtitulo = document.querySelector('#card-deuda .debt-subtitle');
+  if (elSubtitulo) {
+    elSubtitulo.textContent = `Cuota mensual de $5.00 desde ${mesesNombres[MES_INICIO]} ${ANIO_INICIO}`;
+  }
+
+  // Calcular total de meses transcurridos desde su fecha de inicio hasta el mes actual
   const hoy = new Date();
   const cuotasTranscurridas = Math.max(
     0,
