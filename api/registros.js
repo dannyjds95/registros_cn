@@ -2,9 +2,32 @@ const { put, del } = require('@vercel/blob');
 const pool = require('../lib/db');
 
 module.exports = async function handler(req, res) {
-  // 1. CONSULTAR REGISTROS (GET)
+  // 1. CONSULTAR REGISTROS O SERVIR IMAGEN PRIVADA (GET)
   if (req.method === 'GET') {
-    const { id_us, us_tipo } = req.query;
+    const { id_us, us_tipo, ver_imagen } = req.query;
+
+    // Sirve la imagen privada al visor del dashboard
+    if (ver_imagen) {
+      try {
+        const blobRes = await fetch(ver_imagen, {
+          headers: {
+            Authorization: `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}`
+          }
+        });
+
+        if (!blobRes.ok) {
+          return res.status(blobRes.status).send('No se pudo cargar la imagen');
+        }
+
+        const arrayBuffer = await blobRes.arrayBuffer();
+        res.setHeader('Content-Type', blobRes.headers.get('content-type') || 'image/jpeg');
+        res.setHeader('Cache-Control', 'private, max-age=3600');
+        return res.status(200).send(Buffer.from(arrayBuffer));
+      } catch (err) {
+        console.error('Error al leer imagen privada:', err);
+        return res.status(500).send('Error al obtener la imagen');
+      }
+    }
 
     if (!id_us || !us_tipo) {
       return res.status(400).json({ success: false, message: 'Faltan datos de sesión' });
@@ -19,7 +42,6 @@ module.exports = async function handler(req, res) {
       `;
       let params = [];
 
-      // Si NO es administrador, filtramos estrictamente por su id_us
       if (us_tipo.toUpperCase() !== 'ADMINISTRADOR') {
         query += ' WHERE r.id_us = ?';
         params.push(id_us);
@@ -50,14 +72,13 @@ module.exports = async function handler(req, res) {
     try {
       let urlImagen = null;
 
-      // Si se adjuntó imagen, la subimos a la carpeta imagenes/comprobantes/
       if (imagenBase64) {
         const base64Data = imagenBase64.replace(/^data:image\/\w+;base64,/, '');
         const buffer = Buffer.from(base64Data, 'base64');
         const nombreArchivo = `imagenes/comprobantes/${Date.now()}.jpg`;
 
         const blob = await put(nombreArchivo, buffer, {
-          access: 'public',
+          access: 'private',
           contentType: 'image/jpeg'
         });
 
@@ -73,7 +94,10 @@ module.exports = async function handler(req, res) {
       return res.status(201).json({ success: true, message: 'Registro guardado correctamente' });
     } catch (error) {
       console.error('Error al guardar registro:', error);
-      return res.status(500).json({ success: false, message: 'Error al guardar el registro o subir la imagen' });
+      return res.status(500).json({
+        success: false,
+        message: 'Error: ' + (error.message || 'Error desconocido al guardar')
+      });
     }
   }
 
@@ -90,7 +114,6 @@ module.exports = async function handler(req, res) {
     }
 
     try {
-      // Buscamos si tenía imagen para borrarla también del almacenamiento
       const [rows] = await pool.execute('SELECT reg_imagen FROM registros WHERE id_reg = ?', [id_reg]);
       if (rows.length > 0 && rows[0].reg_imagen && rows[0].reg_imagen.startsWith('http')) {
         try {

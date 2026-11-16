@@ -424,7 +424,7 @@
 
     // Visor de comprobante
     function verFoto(url) {
-      document.getElementById('img-visor').src = url;
+      document.getElementById('img-visor').src = `/api/registros?ver_imagen=${encodeURIComponent(url)}`;
       document.getElementById('modal-foto').style.display = 'flex';
     }
 
