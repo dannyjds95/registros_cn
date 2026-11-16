@@ -2,32 +2,9 @@ const { put, del } = require('@vercel/blob');
 const pool = require('../lib/db');
 
 module.exports = async function handler(req, res) {
-  // 1. CONSULTAR REGISTROS O SERVIR IMAGEN PRIVADA (GET)
+  // 1. CONSULTAR REGISTROS (GET)
   if (req.method === 'GET') {
-    const { id_us, us_tipo, ver_imagen } = req.query;
-
-    // Sirve la imagen privada al visor del dashboard
-    if (ver_imagen) {
-      try {
-        const blobRes = await fetch(ver_imagen, {
-          headers: {
-            Authorization: `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}`
-          }
-        });
-
-        if (!blobRes.ok) {
-          return res.status(blobRes.status).send('No se pudo cargar la imagen');
-        }
-
-        const arrayBuffer = await blobRes.arrayBuffer();
-        res.setHeader('Content-Type', blobRes.headers.get('content-type') || 'image/jpeg');
-        res.setHeader('Cache-Control', 'private, max-age=3600');
-        return res.status(200).send(Buffer.from(arrayBuffer));
-      } catch (err) {
-        console.error('Error al leer imagen privada:', err);
-        return res.status(500).send('Error al obtener la imagen');
-      }
-    }
+    const { id_us, us_tipo } = req.query;
 
     if (!id_us || !us_tipo) {
       return res.status(400).json({ success: false, message: 'Faltan datos de sesión' });
@@ -78,7 +55,7 @@ module.exports = async function handler(req, res) {
         const nombreArchivo = `imagenes/comprobantes/${Date.now()}.jpg`;
 
         const blob = await put(nombreArchivo, buffer, {
-          access: 'private',
+          access: 'public',
           contentType: 'image/jpeg'
         });
 
