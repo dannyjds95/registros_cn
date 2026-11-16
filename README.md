@@ -3,7 +3,7 @@ HOST: gateway01.us-east-1.prod.aws.tidbcloud.com
 PORT: 4000
 USERNAME: 2ji5HdpY4sfmZMo.root
 PASSWORD: tQPdtsQdqHSASOp6
-DATABASE: sys
+DATABASE: registro_cn
 CA: <CA_PATH>
 
 
@@ -18,3 +18,5 @@ git commit -m "Actualizacion inicio"
 
 # Enviar los cambios a GitHub
 git push origin main
+
+git add . && git commit -m "Agrega nuevas carpetas y archivos" && git push origin main
