@@ -16,20 +16,19 @@ module.exports = async function handler(req, res) {
 
   // 2. CAMBIAR CONTRASEÑA (PUT)
   if (req.method === 'PUT') {
-    const { id_us, pass_actual, pass_nueva } = req.body;
+    const { id_us, pass_actual, pass_nueva } = req.body || {};
 
     if (!id_us || !pass_actual || !pass_nueva) {
       return res.status(400).json({ success: false, message: 'Completa todos los campos' });
     }
 
-    if (pass_nueva.length < 4) {
+    if (String(pass_nueva).length < 4) {
       return res.status(400).json({ success: false, message: 'La nueva contraseña debe tener al menos 4 caracteres' });
     }
 
     try {
-      // Nota: Si en tu tabla TiDB la columna se llama us_password o us_clave, cámbiala aquí y en el UPDATE
       const [rows] = await pool.execute(
-        'SELECT us_pass FROM usuarios WHERE id_us = ?',
+        'SELECT * FROM usuarios WHERE id_us = ?',
         [id_us]
       );
 
@@ -37,19 +36,34 @@ module.exports = async function handler(req, res) {
         return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
       }
 
-      if (rows[0].us_pass !== pass_actual) {
+      const usuario = rows[0];
+      const colPass = ['us_pass', 'us_password', 'us_clave', 'password', 'clave'].find(
+        col => Object.prototype.hasOwnProperty.call(usuario, col)
+      );
+
+      if (!colPass) {
+        return res.status(500).json({
+          success: false,
+          message: 'No se encontró la columna de contraseña en la tabla usuarios'
+        });
+      }
+
+      if (String(usuario[colPass]) !== String(pass_actual)) {
         return res.status(401).json({ success: false, message: 'La contraseña actual es incorrecta' });
       }
 
       await pool.execute(
-        'UPDATE usuarios SET us_pass = ? WHERE id_us = ?',
-        [pass_nueva, id_us]
+        `UPDATE usuarios SET ${colPass} = ? WHERE id_us = ?`,
+        [String(pass_nueva), id_us]
       );
 
       return res.status(200).json({ success: true, message: 'Contraseña actualizada correctamente' });
     } catch (error) {
       console.error('Error al cambiar contraseña:', error);
-      return res.status(500).json({ success: false, message: 'Error interno al actualizar la contraseña' });
+      return res.status(500).json({
+        success: false,
+        message: 'Error al actualizar: ' + (error.message || 'Error interno del servidor')
+      });
     }
   }
 
