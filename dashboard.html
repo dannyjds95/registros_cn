@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Cobros</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="card" style="max-width: 600px;">
+    <h2>Bienvenido, <span id="user-name"></span></h2>
+    <p style="text-align: center;">
+      Rol actual: <span id="user-role" class="badge"></span>
+    </p>
+
+    <div id="panel-admin" style="display: none; border-top: 1px solid #eee; padding-top: 1rem;">
+      <h3>Controles de Administrador</h3>
+      <p>Aquí podrás agregar, editar y eliminar registros de cobros.</p>
+    </div>
+
+    <div id="panel-usuario" style="display: none; border-top: 1px solid #eee; padding-top: 1rem;">
+      <h3>Vista de Usuario</h3>
+      <p>Aquí verás únicamente los registros asignados o permitidos para tu usuario.</p>
+    </div>
+
+    <button id="btn-logout" style="background-color: #dc2626; margin-top: 1.5rem;">Cerrar Sesión</button>
+  </div>
+
+  <script>
+    const userData = JSON.parse(localStorage.getItem('usuario_cobros'));
+
+    // Si no hay sesión iniciada, regresar al login
+    if (!userData) {
+      window.location.href = 'index.html';
+    } else {
+      document.getElementById('user-name').textContent = userData.us_nombre || userData.us_user;
+      document.getElementById('user-role').textContent = userData.us_tipo;
+
+      if (userData.us_tipo.toUpperCase() === 'ADMINISTRADOR') {
+        document.getElementById('panel-admin').style.display = 'block';
+      } else {
+        document.getElementById('panel-usuario').style.display = 'block';
+      }
+    }
+
+    document.getElementById('btn-logout').addEventListener('click', () => {
+      localStorage.removeItem('usuario_cobros');
+      window.location.href = 'index.html';
+    });
+  </script>
+</body>
+</html>
