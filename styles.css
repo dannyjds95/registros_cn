@@ -443,3 +443,7 @@ tr:hover {
   color: #64748b;
   margin-top: 0.2rem;
 }
+
+.debt-card.balance-card {
+  border-top-color: #2563eb;
+}

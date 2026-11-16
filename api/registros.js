@@ -6,30 +6,18 @@ const GITHUB_BRANCH = 'main';
 
 module.exports = async function handler(req, res) {
   // 1. CONSULTAR REGISTROS (GET)
+// 1. CONSULTAR REGISTROS (GET - Todos los usuarios ven todos los movimientos)
   if (req.method === 'GET') {
-    const { id_us, us_tipo } = req.query;
-
-    if (!id_us || !us_tipo) {
-      return res.status(400).json({ success: false, message: 'Faltan datos de sesión' });
-    }
-
     try {
-      let query = `
+      const query = `
         SELECT r.id_reg, r.id_us, r.reg_tipo, r.reg_fecha, r.reg_valor, r.reg_detalle, r.reg_imagen,
                u.us_nombre, u.us_user
         FROM registros r
         LEFT JOIN usuarios u ON r.id_us = u.id_us
+        ORDER BY r.reg_fecha DESC, r.id_reg DESC
       `;
-      let params = [];
 
-      if (us_tipo.toUpperCase() !== 'ADMINISTRADOR') {
-        query += ' WHERE r.id_us = ?';
-        params.push(id_us);
-      }
-
-      query += ' ORDER BY r.reg_fecha DESC, r.id_reg DESC';
-
-      const [rows] = await pool.execute(query, params);
+      const [rows] = await pool.execute(query);
       return res.status(200).json({ success: true, registros: rows });
     } catch (error) {
       console.error('Error al consultar registros:', error);

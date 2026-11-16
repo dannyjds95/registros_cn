@@ -25,6 +25,7 @@
   <main class="container">
 
     <!-- Estado de Cuenta y Cuotas del Usuario -->
+<!-- 1. Estado de Cuenta del Usuario Actual -->
     <section id="card-deuda" class="debt-card">
       <div class="debt-header">
         <div>
@@ -44,6 +45,7 @@
         <div class="debt-item">
           <div class="debt-label">Cuotas Pendientes</div>
           <div class="debt-number danger" id="deuda-cuotas-debe">0 cuotas</div>
+          <div class="debt-note">Aportaciones pendientes</div>
         </div>
 
         <div class="debt-item">
@@ -60,20 +62,33 @@
       </div>
     </section>
 
+    <!-- 2. Balance General (Global para todos los usuarios) -->
+    <section class="debt-card balance-card">
+      <div class="debt-header">
+        <div>
+          <h2>Balance General</h2>
+          <span class="debt-subtitle">Resumen global de todos los movimientos registrados</span>
+        </div>
+      </div>
 
-    <!-- Tarjetas de resumen financiero -->
-    <section class="kpi-grid">
-      <div class="kpi-card ingreso">
-        <div class="kpi-title">Total Ingresos</div>
-        <div class="kpi-value" id="total-ingresos">$0.00</div>
-      </div>
-      <div class="kpi-card egreso">
-        <div class="kpi-title">Total Egresos</div>
-        <div class="kpi-value" id="total-egresos">$0.00</div>
-      </div>
-      <div class="kpi-card balance">
-        <div class="kpi-title">Balance Neto</div>
-        <div class="kpi-value" id="total-balance">$0.00</div>
+      <div class="debt-grid">
+        <div class="debt-item">
+          <div class="debt-label">Total Ingresos</div>
+          <div class="debt-number success" id="total-ingresos">$0.00</div>
+          <div class="debt-note">Acumulado de ingresos</div>
+        </div>
+
+        <div class="debt-item">
+          <div class="debt-label">Total Egresos</div>
+          <div class="debt-number danger" id="total-egresos">$0.00</div>
+          <div class="debt-note">Acumulado de egresos</div>
+        </div>
+
+        <div class="debt-item">
+          <div class="debt-label">Balance Neto</div>
+          <div class="debt-number" id="total-balance">$0.00</div>
+          <div class="debt-note">Saldo disponible en caja</div>
+        </div>
       </div>
     </section>
 
