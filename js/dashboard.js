@@ -64,7 +64,7 @@
     }
 
     // Filtrar y renderizar tabla + tarjetas resumen
-    function aplicarFiltros() {
+function aplicarFiltros() {
       const texto = document.getElementById('filtro-texto').value.toLowerCase();
       const tipo = document.getElementById('filtro-tipo').value;
       const usuarioFiltro = document.getElementById('filtro-usuario').value;
@@ -78,7 +78,95 @@
 
       renderizarTabla(filtrados);
       actualizarResumen(filtrados);
+      actualizarEstadoDeuda();
     }
+
+
+    function actualizarEstadoDeuda() {
+      const VALOR_CUOTA = 5;
+      const ANIO_INICIO = 2023;
+      const MES_INICIO = 7; // Agosto (en JavaScript Enero = 0, Agosto = 7)
+
+      const mesesNombres = [
+        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+      ];
+
+      // Si el admin seleccionó un usuario en el filtro, mostramos la deuda de ese usuario;
+      // de lo contrario, mostramos la del usuario que inició sesión.
+      const selectFiltro = document.getElementById('filtro-usuario');
+      let idObjetivo = String(userData.id_us);
+      let nombreObjetivo = userData.us_nombre || userData.us_user;
+
+      if (esAdmin && selectFiltro && selectFiltro.value !== '') {
+        idObjetivo = selectFiltro.value;
+        nombreObjetivo = selectFiltro.options[selectFiltro.selectedIndex].text;
+      }
+
+      // Calcular total de meses transcurridos desde Agosto 2023 hasta el mes actual (inclusive)
+      const hoy = new Date();
+      const cuotasTranscurridas = Math.max(
+        0,
+        (hoy.getFullYear() - ANIO_INICIO) * 12 + (hoy.getMonth() - MES_INICIO) + 1
+      );
+      const valorTotalEsperado = cuotasTranscurridas * VALOR_CUOTA;
+
+      // Sumar únicamente los INGRESOS del usuario evaluado
+      const totalPagado = todosLosRegistros
+        .filter(r => String(r.id_us) === idObjetivo && r.reg_tipo === 'INGRESO')
+        .reduce((suma, r) => suma + (parseFloat(r.reg_valor) || 0), 0);
+
+      const valorAdeudado = Math.max(0, valorTotalEsperado - totalPagado);
+      const saldoAFavor = Math.max(0, totalPagado - valorTotalEsperado);
+
+      const cuotasPagadas = totalPagado / VALOR_CUOTA;
+      const cuotasAdeudadas = valorAdeudado / VALOR_CUOTA;
+
+      const formatearCuotas = (num) => Number.isInteger(num) ? num : num.toFixed(1);
+
+      // Calcular hasta qué mes y año alcanza lo que lleva pagado
+      const cuotasCompletas = Math.floor(totalPagado / VALOR_CUOTA);
+      let textoCubiertoHasta = 'Sin cuotas pagadas';
+      if (cuotasCompletas > 0) {
+        const totalMeses = ANIO_INICIO * 12 + MES_INICIO + cuotasCompletas - 1;
+        const anioCubierto = Math.floor(totalMeses / 12);
+        const mesCubierto = totalMeses % 12;
+        textoCubiertoHasta = `${mesesNombres[mesCubierto]} ${anioCubierto}`;
+      }
+
+      // Actualizar interfaz
+      document.getElementById('deuda-usuario-nombre').textContent = nombreObjetivo;
+      document.getElementById('deuda-pagado').textContent = `$${totalPagado.toFixed(2)}`;
+      document.getElementById('deuda-cuotas-pagadas').textContent =
+        `${formatearCuotas(cuotasPagadas)} de ${cuotasTranscurridas} cuotas`;
+
+      const elCuotasDebe = document.getElementById('deuda-cuotas-debe');
+      const elValorDebe = document.getElementById('deuda-valor-debe');
+      const elBadge = document.getElementById('deuda-estado-badge');
+      const elCard = document.getElementById('card-deuda');
+
+      elCuotasDebe.textContent = `${formatearCuotas(cuotasAdeudadas)} ${cuotasAdeudadas === 1 ? 'cuota' : 'cuotas'}`;
+      elValorDebe.textContent = `$${valorAdeudado.toFixed(2)}`;
+      document.getElementById('deuda-total-esperado').textContent = `Total esperado: $${valorTotalEsperado.toFixed(2)}`;
+      document.getElementById('deuda-cubierto-hasta').textContent = textoCubiertoHasta;
+
+      if (valorAdeudado === 0) {
+        elCuotasDebe.className = 'debt-number success';
+        elValorDebe.className = 'debt-number success';
+        elCard.classList.add('al-dia');
+        elBadge.className = 'status-badge status-ok';
+        elBadge.textContent = saldoAFavor > 0
+          ? `Al día (Saldo a favor: $${saldoAFavor.toFixed(2)})`
+          : 'Al día';
+      } else {
+        elCuotasDebe.className = 'debt-number danger';
+        elValorDebe.className = 'debt-number danger';
+        elCard.classList.remove('al-dia');
+        elBadge.className = 'status-badge status-pending';
+        elBadge.textContent = 'Con saldo pendiente';
+      }
+    }
+
 
     function actualizarResumen(lista) {
       let ingresos = 0;
