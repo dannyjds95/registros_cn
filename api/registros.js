@@ -1,5 +1,8 @@
-const { put, del } = require('@vercel/blob');
 const pool = require('../lib/db');
+
+const GITHUB_OWNER = 'dannyjds95';
+const GITHUB_REPO = 'registros_cn';
+const GITHUB_BRANCH = 'main';
 
 module.exports = async function handler(req, res) {
   // 1. CONSULTAR REGISTROS (GET)
@@ -34,7 +37,7 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  // 2. CREAR NUEVO REGISTRO (POST)
+  // 2. CREAR NUEVO REGISTRO Y SUBIR FOTO A GITHUB (POST)
   if (req.method === 'POST') {
     const { rol_solicitante, id_us, reg_tipo, reg_fecha, reg_valor, reg_detalle, imagenBase64 } = req.body;
 
@@ -47,25 +50,44 @@ module.exports = async function handler(req, res) {
     }
 
     try {
-      let urlImagen = null;
+      let rutaImagen = null;
 
       if (imagenBase64) {
-        const base64Data = imagenBase64.replace(/^data:image\/\w+;base64,/, '');
-        const buffer = Buffer.from(base64Data, 'base64');
-        const nombreArchivo = `imagenes/comprobantes/${Date.now()}.jpg`;
+        if (!process.env.GITHUB_TOKEN) {
+          throw new Error('Falta configurar la variable GITHUB_TOKEN en Vercel');
+        }
 
-        const blob = await put(nombreArchivo, buffer, {
-          access: 'public',
-          contentType: 'image/jpeg'
+        const base64Data = imagenBase64.replace(/^data:image\/\w+;base64,/, '');
+        const nombreArchivo = `${Date.now()}.jpg`;
+        rutaImagen = `imagenes/comprobantes/${nombreArchivo}`;
+
+        const githubUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${rutaImagen}`;
+
+        const ghRes = await fetch(githubUrl, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,
+            'Accept': 'application/vnd.github+json',
+            'Content-Type': 'application/json',
+            'User-Agent': 'registros-cn-app'
+          },
+          body: JSON.stringify({
+            message: `Nuevo comprobante: ${nombreArchivo}`,
+            content: base64Data,
+            branch: GITHUB_BRANCH
+          })
         });
 
-        urlImagen = blob.url;
+        if (!ghRes.ok) {
+          const ghError = await ghRes.json();
+          throw new Error(`Error de GitHub: ${ghError.message || ghRes.statusText}`);
+        }
       }
 
       await pool.execute(
         `INSERT INTO registros (id_us, reg_tipo, reg_fecha, reg_valor, reg_detalle, reg_imagen)
          VALUES (?, ?, ?, ?, ?, ?)`,
-        [id_us, reg_tipo, reg_fecha, reg_valor, reg_detalle || '', urlImagen]
+        [id_us, reg_tipo, reg_fecha, reg_valor, reg_detalle || '', rutaImagen]
       );
 
       return res.status(201).json({ success: true, message: 'Registro guardado correctamente' });
@@ -73,12 +95,12 @@ module.exports = async function handler(req, res) {
       console.error('Error al guardar registro:', error);
       return res.status(500).json({
         success: false,
-        message: 'Error: ' + (error.message || 'Error desconocido al guardar')
+        message: error.message || 'Error desconocido al guardar'
       });
     }
   }
 
-  // 3. ELIMINAR REGISTRO (DELETE)
+  // 3. ELIMINAR REGISTRO Y BORRAR FOTO DE GITHUB (DELETE)
   if (req.method === 'DELETE') {
     const { id_reg, rol_solicitante } = req.query;
 
@@ -92,11 +114,40 @@ module.exports = async function handler(req, res) {
 
     try {
       const [rows] = await pool.execute('SELECT reg_imagen FROM registros WHERE id_reg = ?', [id_reg]);
-      if (rows.length > 0 && rows[0].reg_imagen && rows[0].reg_imagen.startsWith('http')) {
+
+      if (rows.length > 0 && rows[0].reg_imagen && process.env.GITHUB_TOKEN) {
+        const rutaArchivo = rows[0].reg_imagen;
+        const githubUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${rutaArchivo}`;
+
         try {
-          await del(rows[0].reg_imagen);
-        } catch (blobErr) {
-          console.warn('No se pudo eliminar el archivo de Blob:', blobErr);
+          // Primero obtenemos el SHA del archivo en GitHub para poder eliminarlo
+          const getRes = await fetch(`${githubUrl}?ref=${GITHUB_BRANCH}`, {
+            headers: {
+              'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,
+              'Accept': 'application/vnd.github+json',
+              'User-Agent': 'registros-cn-app'
+            }
+          });
+
+          if (getRes.ok) {
+            const fileData = await getRes.json();
+            await fetch(githubUrl, {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,
+                'Accept': 'application/vnd.github+json',
+                'Content-Type': 'application/json',
+                'User-Agent': 'registros-cn-app'
+              },
+              body: JSON.stringify({
+                message: `Eliminar comprobante: ${rutaArchivo}`,
+                sha: fileData.sha,
+                branch: GITHUB_BRANCH
+              })
+            });
+          }
+        } catch (ghErr) {
+          console.warn('No se pudo borrar la imagen de GitHub:', ghErr);
         }
       }
 

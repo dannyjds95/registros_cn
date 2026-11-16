@@ -423,8 +423,11 @@
     }
 
     // Visor de comprobante
-function verFoto(url) {
-      document.getElementById('img-visor').src = url;
+function verFoto(ruta) {
+      const urlCompleta = ruta.startsWith('http')
+        ? ruta
+        : `https://raw.githubusercontent.com/dannyjds95/registros_cn/main/${ruta}`;
+      document.getElementById('img-visor').src = urlCompleta;
       document.getElementById('modal-foto').style.display = 'flex';
     }
 
