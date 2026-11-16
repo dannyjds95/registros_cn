@@ -378,3 +378,76 @@ function cerrarModalFoto() {
 
 // Iniciar carga
 cargarRegistros();
+
+
+// Lógica para Cambiar Contraseña
+const modalPassword = document.getElementById('modal-password');
+const formPassword = document.getElementById('form-password');
+const passMensaje = document.getElementById('pass-mensaje');
+
+function cerrarModalPassword() {
+  modalPassword.style.display = 'none';
+}
+
+document.getElementById('btn-cambiar-pass').addEventListener('click', () => {
+  formPassword.reset();
+  passMensaje.style.display = 'none';
+  modalPassword.style.display = 'flex';
+});
+
+document.getElementById('btn-cerrar-pass').addEventListener('click', cerrarModalPassword);
+document.getElementById('btn-cancelar-pass').addEventListener('click', cerrarModalPassword);
+
+formPassword.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const passActual = document.getElementById('pass-actual').value;
+  const passNueva = document.getElementById('pass-nueva').value;
+  const passConfirmar = document.getElementById('pass-confirmar').value;
+  const btnGuardar = document.getElementById('btn-guardar-pass');
+
+  passMensaje.style.display = 'none';
+
+  if (passNueva !== passConfirmar) {
+    passMensaje.className = 'alert-error';
+    passMensaje.textContent = 'La nueva contraseña y su confirmación no coinciden';
+    passMensaje.style.display = 'block';
+    return;
+  }
+
+  btnGuardar.disabled = true;
+  btnGuardar.textContent = 'Actualizando...';
+
+  try {
+    const res = await fetch('/api/usuarios', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id_us: userData.id_us,
+        pass_actual: passActual,
+        pass_nueva: passNueva
+      })
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      passMensaje.className = 'alert-success';
+      passMensaje.textContent = data.message;
+      passMensaje.style.display = 'block';
+      formPassword.reset();
+      setTimeout(cerrarModalPassword, 1500);
+    } else {
+      passMensaje.className = 'alert-error';
+      passMensaje.textContent = data.message || 'No se pudo cambiar la contraseña';
+      passMensaje.style.display = 'block';
+    }
+  } catch (err) {
+    passMensaje.className = 'alert-error';
+    passMensaje.textContent = 'Error de conexión con el servidor';
+    passMensaje.style.display = 'block';
+  } finally {
+    btnGuardar.disabled = false;
+    btnGuardar.textContent = 'Actualizar contraseña';
+  }
+});
