@@ -37,13 +37,18 @@ async function cargarUsuarios() {
       const selectForm = document.getElementById('reg-usuario');
       const selectFiltro = document.getElementById('filtro-usuario');
 
-      selectForm.innerHTML = '<option value="">-- Seleccione un usuario --</option>';
-      selectFiltro.innerHTML = '<option value="">Todos los usuarios</option>';
+      if (selectForm) {
+        selectForm.innerHTML = '<option value="">-- Seleccione un usuario --</option>';
+      }
+      if (selectFiltro) {
+        selectFiltro.innerHTML = '<option value="">Todos los usuarios</option>';
+      }
 
       data.usuarios.forEach(u => {
-        const texto = `${u.us_nombre} (${u.us_user})`;
-        selectForm.innerHTML += `<option value="${u.id_us}">${texto}</option>`;
-        selectFiltro.innerHTML += `<option value="${u.id_us}">${texto}</option>`;
+        const texto = u.us_nombre || u.us_user;
+        const opcion = `<option value="${u.id_us}">${texto}</option>`;
+        if (selectForm) selectForm.innerHTML += opcion;
+        if (selectFiltro) selectFiltro.innerHTML += opcion;
       });
     }
   } catch (err) {
