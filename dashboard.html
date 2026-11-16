@@ -3,50 +3,437 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Panel de Cobros</title>
+  <title>Panel de Gestión de Cobros</title>
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-  <div class="card" style="max-width: 600px;">
-    <h2>Bienvenido, <span id="user-name"></span></h2>
-    <p style="text-align: center;">
-      Rol actual: <span id="user-role" class="badge"></span>
-    </p>
+<body class="dashboard-body">
 
-    <div id="panel-admin" style="display: none; border-top: 1px solid #eee; padding-top: 1rem;">
-      <h3>Controles de Administrador</h3>
-      <p>Aquí podrás agregar, editar y eliminar registros de cobros.</p>
+  <!-- Barra superior -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <h1>Gestión de Cobros</h1>
     </div>
-
-    <div id="panel-usuario" style="display: none; border-top: 1px solid #eee; padding-top: 1rem;">
-      <h3>Vista de Usuario</h3>
-      <p>Aquí verás únicamente los registros asignados o permitidos para tu usuario.</p>
+    <div class="topbar-user">
+      <span>Hola, <strong id="user-name"></strong></span>
+      <span id="user-role" class="badge"></span>
+      <button id="btn-logout" class="btn-logout">Cerrar Sesión</button>
     </div>
+  </header>
 
-    <button id="btn-logout" style="background-color: #dc2626; margin-top: 1.5rem;">Cerrar Sesión</button>
+  <main class="container">
+    <!-- Tarjetas de resumen financiero -->
+    <section class="kpi-grid">
+      <div class="kpi-card ingreso">
+        <div class="kpi-title">Total Ingresos</div>
+        <div class="kpi-value" id="total-ingresos">$0.00</div>
+      </div>
+      <div class="kpi-card egreso">
+        <div class="kpi-title">Total Egresos</div>
+        <div class="kpi-value" id="total-egresos">$0.00</div>
+      </div>
+      <div class="kpi-card balance">
+        <div class="kpi-title">Balance Neto</div>
+        <div class="kpi-value" id="total-balance">$0.00</div>
+      </div>
+    </section>
+
+    <!-- Filtros y Botón de Nuevo Registro -->
+    <section class="toolbar">
+      <div class="filters">
+        <input type="text" id="filtro-texto" placeholder="Buscar por detalle...">
+        <select id="filtro-tipo">
+          <option value="">Todos los tipos</option>
+          <option value="INGRESO">Solo INGRESOS</option>
+          <option value="EGRESO">Solo EGRESOS</option>
+        </select>
+        <!-- Filtro por usuario visible solo para ADMINISTRADOR -->
+        <select id="filtro-usuario" style="display: none;">
+          <option value="">Todos los usuarios</option>
+        </select>
+      </div>
+
+      <button id="btn-abrir-modal" class="btn-success" style="display: none;">
+        + Nuevo Registro
+      </button>
+    </section>
+
+    <!-- Tabla de registros -->
+    <section class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Usuario</th>
+            <th>Tipo</th>
+            <th>Detalle</th>
+            <th>Valor</th>
+            <th>Comprobante</th>
+            <th id="col-acciones" style="display: none;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-registros">
+          <tr>
+            <td colspan="7" style="text-align: center; padding: 2rem;">Cargando registros...</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <!-- MODAL PARA CREAR NUEVO REGISTRO (Solo ADMINISTRADOR) -->
+  <div id="modal-registro" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Nuevo Registro de Cobro</h3>
+        <button type="button" class="close-btn" id="btn-cerrar-modal">&times;</button>
+      </div>
+
+      <div id="modal-error" class="error"></div>
+
+      <form id="form-registro">
+        <div class="form-group">
+          <label for="reg-usuario">Usuario asignado *</label>
+          <select id="reg-usuario" required>
+            <option value="">Cargando usuarios...</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="reg-tipo">Tipo de movimiento *</label>
+          <select id="reg-tipo" required>
+            <option value="INGRESO">INGRESO</option>
+            <option value="EGRESO">EGRESO</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="reg-fecha">Fecha *</label>
+          <input type="date" id="reg-fecha" required>
+        </div>
+
+        <div class="form-group">
+          <label for="reg-valor">Valor ($) *</label>
+          <input type="number" id="reg-valor" step="0.01" min="0.01" required placeholder="0.00">
+        </div>
+
+        <div class="form-group">
+          <label for="reg-detalle">Detalle / Concepto</label>
+          <input type="text" id="reg-detalle" maxlength="255" placeholder="Ej. Pago cuota mensual">
+        </div>
+
+        <div class="form-group">
+          <label for="reg-imagen">Imagen de comprobante (opcional)</label>
+          <input type="file" id="reg-imagen" accept="image/*">
+          <img id="preview-imagen" class="preview-img" alt="Vista previa">
+        </div>
+
+        <button type="submit" id="btn-guardar-registro" class="btn-success" style="width: 100%; margin-top: 0.5rem;">
+          Guardar Registro
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL PARA VER COMPROBANTE -->
+  <div id="modal-foto" class="modal-overlay">
+    <div class="modal-box" style="text-align: center; max-width: 550px;">
+      <div class="modal-header">
+        <h3>Comprobante Adjunto</h3>
+        <button type="button" class="close-btn" onclick="cerrarModalFoto()">&times;</button>
+      </div>
+      <img id="img-visor" src="" alt="Comprobante" style="max-width: 100%; border-radius: 8px;">
+    </div>
   </div>
 
   <script>
     const userData = JSON.parse(localStorage.getItem('usuario_cobros'));
 
-    // Si no hay sesión iniciada, regresar al login
     if (!userData) {
       window.location.href = 'index.html';
-    } else {
-      document.getElementById('user-name').textContent = userData.us_nombre || userData.us_user;
-      document.getElementById('user-role').textContent = userData.us_tipo;
-
-      if (userData.us_tipo.toUpperCase() === 'ADMINISTRADOR') {
-        document.getElementById('panel-admin').style.display = 'block';
-      } else {
-        document.getElementById('panel-usuario').style.display = 'block';
-      }
     }
 
+    const esAdmin = userData.us_tipo.toUpperCase() === 'ADMINISTRADOR';
+    let todosLosRegistros = [];
+
+    // Configurar cabecera según usuario
+    document.getElementById('user-name').textContent = userData.us_nombre || userData.us_user;
+    document.getElementById('user-role').textContent = userData.us_tipo;
+
+    if (esAdmin) {
+      document.getElementById('btn-abrir-modal').style.display = 'inline-block';
+      document.getElementById('col-acciones').style.display = 'table-cell';
+      document.getElementById('filtro-usuario').style.display = 'inline-block';
+      cargarUsuarios();
+    }
+
+    // Cerrar sesión
     document.getElementById('btn-logout').addEventListener('click', () => {
       localStorage.removeItem('usuario_cobros');
       window.location.href = 'index.html';
     });
+
+    // Cargar listado de usuarios en el select del formulario y filtro
+    async function cargarUsuarios() {
+      try {
+        const res = await fetch('/api/usuarios');
+        const data = await res.json();
+
+        if (data.success) {
+          const selectForm = document.getElementById('reg-usuario');
+          const selectFiltro = document.getElementById('filtro-usuario');
+
+          selectForm.innerHTML = '<option value="">-- Seleccione un usuario --</option>';
+          data.usuarios.forEach(u => {
+            const texto = `${u.us_nombre} (${u.us_user})`;
+            selectForm.innerHTML += `<option value="${u.id_us}">${texto}</option>`;
+            selectFiltro.innerHTML += `<option value="${u.id_us}">${texto}</option>`;
+          });
+        }
+      } catch (err) {
+        console.error('Error cargando usuarios:', err);
+      }
+    }
+
+    // Cargar registros desde la base de datos
+    async function cargarRegistros() {
+      try {
+        const url = `/api/registros?id_us=${userData.id_us}&us_tipo=${encodeURIComponent(userData.us_tipo)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data.success) {
+          todosLosRegistros = data.registros;
+          aplicarFiltros();
+        }
+      } catch (err) {
+        document.getElementById('tabla-registros').innerHTML =
+          '<tr><td colspan="7" style="text-align:center; color:red;">Error al cargar los datos</td></tr>';
+      }
+    }
+
+    // Filtrar y renderizar tabla + tarjetas resumen
+    function aplicarFiltros() {
+      const texto = document.getElementById('filtro-texto').value.toLowerCase();
+      const tipo = document.getElementById('filtro-tipo').value;
+      const usuarioFiltro = document.getElementById('filtro-usuario').value;
+
+      const filtrados = todosLosRegistros.filter(r => {
+        const coincideTexto = (r.reg_detalle || '').toLowerCase().includes(texto);
+        const coincideTipo = tipo === '' || r.reg_tipo === tipo;
+        const coincideUsuario = usuarioFiltro === '' || String(r.id_us) === usuarioFiltro;
+        return coincideTexto && coincideTipo && coincideUsuario;
+      });
+
+      renderizarTabla(filtrados);
+      actualizarResumen(filtrados);
+    }
+
+    function actualizarResumen(lista) {
+      let ingresos = 0;
+      let egresos = 0;
+
+      lista.forEach(r => {
+        const val = parseFloat(r.reg_valor) || 0;
+        if (r.reg_tipo === 'INGRESO') ingresos += val;
+        if (r.reg_tipo === 'EGRESO') egresos += val;
+      });
+
+      const balance = ingresos - egresos;
+      document.getElementById('total-ingresos').textContent = `$${ingresos.toFixed(2)}`;
+      document.getElementById('total-egresos').textContent = `$${egresos.toFixed(2)}`;
+      document.getElementById('total-balance').textContent = `$${balance.toFixed(2)}`;
+    }
+
+    function renderizarTabla(lista) {
+      const tbody = document.getElementById('tabla-registros');
+
+      if (lista.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem;">No hay registros para mostrar.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = lista.map(r => {
+        const badgeTipo = r.reg_tipo === 'INGRESO'
+          ? '<span class="tag-ingreso">INGRESO</span>'
+          : '<span class="tag-egreso">EGRESO</span>';
+
+        const nombreUsuario = r.us_nombre ? `${r.us_nombre}` : `ID: ${r.id_us}`;
+        const valorFormateado = `$${parseFloat(r.reg_valor).toFixed(2)}`;
+
+        const btnFoto = r.reg_imagen
+          ? `<button type="button" class="btn-sm btn-outline" onclick="verFoto('${r.reg_imagen}')">Ver imagen</button>`
+          : '<span style="color: #94a3b8; font-size: 0.85rem;">Sin foto</span>';
+
+        const btnEliminar = esAdmin
+          ? `<td><button type="button" class="btn-sm btn-danger-sm" onclick="eliminarRegistro(${r.id_reg})">Eliminar</button></td>`
+          : '';
+
+        return `
+          <tr>
+            <td>${r.reg_fecha}</td>
+            <td><strong>${nombreUsuario}</strong></td>
+            <td>${badgeTipo}</td>
+            <td>${r.reg_detalle || '-'}</td>
+            <td><strong>${valorFormateado}</strong></td>
+            <td>${btnFoto}</td>
+            ${btnEliminar}
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Eventos de filtros
+    document.getElementById('filtro-texto').addEventListener('input', aplicarFiltros);
+    document.getElementById('filtro-tipo').addEventListener('change', aplicarFiltros);
+    document.getElementById('filtro-usuario').addEventListener('change', aplicarFiltros);
+
+    // Lógica del Modal de Nuevo Registro
+    const modalRegistro = document.getElementById('modal-registro');
+    const inputImagen = document.getElementById('reg-imagen');
+    const previewImg = document.getElementById('preview-imagen');
+
+    document.getElementById('btn-abrir-modal').addEventListener('click', () => {
+      document.getElementById('form-registro').reset();
+      document.getElementById('reg-fecha').value = new Date().toISOString().split('T')[0];
+      previewImg.style.display = 'none';
+      document.getElementById('modal-error').style.display = 'none';
+      modalRegistro.style.display = 'flex';
+    });
+
+    document.getElementById('btn-cerrar-modal').addEventListener('click', () => {
+      modalRegistro.style.display = 'none';
+    });
+
+    // Vista previa de la imagen seleccionada
+    inputImagen.addEventListener('change', () => {
+      const file = inputImagen.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = e => {
+          previewImg.src = e.target.result;
+          previewImg.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        previewImg.style.display = 'none';
+      }
+    });
+
+    // Comprimir imagen antes de enviar para que suba rápido y sin errores de tamaño
+    function comprimirImagen(file) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+          const img = new Image();
+          img.src = event.target.result;
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const maxDim = 1200;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > maxDim || height > maxDim) {
+              if (width > height) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              } else {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', 0.8));
+          };
+        };
+      });
+    }
+
+    // Enviar formulario de registro
+    document.getElementById('form-registro').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btnGuardar = document.getElementById('btn-guardar-registro');
+      const errorDiv = document.getElementById('modal-error');
+
+      errorDiv.style.display = 'none';
+      btnGuardar.disabled = true;
+      btnGuardar.textContent = 'Guardando...';
+
+      try {
+        let imagenBase64 = null;
+        if (inputImagen.files.length > 0) {
+          imagenBase64 = await comprimirImagen(inputImagen.files[0]);
+        }
+
+        const payload = {
+          rol_solicitante: userData.us_tipo,
+          id_us: document.getElementById('reg-usuario').value,
+          reg_tipo: document.getElementById('reg-tipo').value,
+          reg_fecha: document.getElementById('reg-fecha').value,
+          reg_valor: document.getElementById('reg-valor').value,
+          reg_detalle: document.getElementById('reg-detalle').value.trim(),
+          imagenBase64
+        };
+
+        const res = await fetch('/api/registros', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          modalRegistro.style.display = 'none';
+          await cargarRegistros();
+        } else {
+          errorDiv.textContent = data.message || 'Error al guardar';
+          errorDiv.style.display = 'block';
+        }
+      } catch (err) {
+        errorDiv.textContent = 'Error de conexión con el servidor';
+        errorDiv.style.display = 'block';
+      } finally {
+        btnGuardar.disabled = false;
+        btnGuardar.textContent = 'Guardar Registro';
+      }
+    });
+
+    // Eliminar registro (Solo ADMINISTRADOR)
+    async function eliminarRegistro(id_reg) {
+      if (!confirm('¿Estás seguro de que deseas eliminar este registro?')) return;
+
+      try {
+        const res = await fetch(`/api/registros?id_reg=${id_reg}&rol_solicitante=${encodeURIComponent(userData.us_tipo)}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (data.success) {
+          await cargarRegistros();
+        } else {
+          alert(data.message || 'No se pudo eliminar');
+        }
+      } catch (err) {
+        alert('Error de conexión al intentar eliminar');
+      }
+    }
+
+    // Visor de comprobante
+    function verFoto(url) {
+      document.getElementById('img-visor').src = url;
+      document.getElementById('modal-foto').style.display = 'flex';
+    }
+
+    function cerrarModalFoto() {
+      document.getElementById('modal-foto').style.display = 'none';
+    }
+
+    // Iniciar carga
+    cargarRegistros();
   </script>
 </body>
 </html>
