@@ -14,7 +14,7 @@ git status
 git add .
 
 # Guardar los cambios con un mensaje
-git commit -m "Actualizacion de estilos y scripts"
+git commit -m "Actualizacion inicio"
 
 # Enviar los cambios a GitHub
 git push origin main
