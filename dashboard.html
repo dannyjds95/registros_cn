@@ -2,6 +2,14 @@
 <html lang="es">
 
 <head>
+
+<link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Familia Cuñez">
+  <link rel="apple-touch-icon" href="imagenes/logo.png">
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="imagenes/logo.png">
@@ -239,6 +247,16 @@
   </div>
 
   <script src="../js/dashboard.js"></script>
+
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .catch(err => console.error('Error registrando Service Worker:', err));
+      });
+    }
+  </script>
 </body>
 
 </html>
