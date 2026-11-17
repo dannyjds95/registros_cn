@@ -623,3 +623,40 @@ tr:hover {
     padding: 0.65rem 1rem;
   }
 }
+
+@media (max-width: 768px) {
+  /* Apilar el contenedor principal de filtros y botón en columna */
+  section:has(#filtro-texto),
+  div:has(> #filtro-texto),
+  div:has(> div > #filtro-texto) {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.75rem !important;
+    padding: 1rem !important;
+  }
+
+  /* Si los 3 filtros están dentro de un subcontenedor, apilarlos también a ancho completo */
+  div:has(> #filtro-texto) {
+    width: 100% !important;
+    padding: 0 !important;
+  }
+
+  /* Hacer que buscador, selectores y botón ocupen todo el ancho */
+  #filtro-texto,
+  #filtro-tipo,
+  #filtro-usuario,
+  #btn-abrir-modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    height: 44px;
+    font-size: 0.95rem;
+  }
+
+  #btn-abrir-modal {
+    text-align: center;
+    justify-content: center;
+  }
+}
