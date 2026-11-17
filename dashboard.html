@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="imagenes/logo.png">
   <title>REGISTROS</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -13,7 +14,10 @@
   <!-- Barra superior -->
 <header class="topbar">
     <div class="topbar-brand">
-      <h1>FAMILIA CUÑEZ</h1>
+      <div class="brand-logo-group">
+        <img src="imagenes/logo.png" alt="Logo Familia Cuñez" class="topbar-logo">
+        <h1>FAMILIA CUÑEZ</h1>
+      </div>
       <button type="button" id="btn-menu-movil" class="menu-toggle" aria-label="Abrir menú">
         &#9776;
       </button>
@@ -22,11 +26,8 @@
     <div id="topbar-menu" class="topbar-menu">
       <span class="user-greeting">Hola, <strong id="user-name"></strong></span>
       <button type="button" id="btn-cambiar-pass" class="btn-topbar-secondary">Cambiar contraseña</button>
-      <button id="btn-abrir-modal" class="btn-success" style="display: none;">
-        + Nuevo Registro
-      </button>
+      <button type="button" id="btn-abrir-modal" class="btn-success" style="display: none;">+ Nuevo Registro</button>
       <button type="button" id="btn-logout" class="btn-logout">Cerrar Sesión</button>
-      
     </div>
   </header>
 

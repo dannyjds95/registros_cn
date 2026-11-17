@@ -248,6 +248,9 @@ const inputImagen = document.getElementById('reg-imagen');
 const previewImg = document.getElementById('preview-imagen');
 
 document.getElementById('btn-abrir-modal').addEventListener('click', () => {
+  const topbarMenu = document.getElementById('topbar-menu');
+  if (topbarMenu) topbarMenu.classList.remove('open');
+
   document.getElementById('form-registro').reset();
   document.getElementById('reg-fecha').value = new Date().toISOString().split('T')[0];
   previewImg.style.display = 'none';

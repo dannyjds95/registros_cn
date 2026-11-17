@@ -660,3 +660,50 @@ tr:hover {
     justify-content: center;
   }
 }
+
+/* Estilos del Logo */
+.brand-logo-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.topbar-logo {
+  height: 40px;
+  width: 40px;
+  object-fit: contain;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.login-logo {
+  display: block;
+  width: 85px;
+  height: 85px;
+  object-fit: contain;
+  margin: 0 auto 0.75rem auto;
+  border-radius: 12px;
+}
+
+@media (max-width: 768px) {
+  .topbar-logo {
+    height: 34px;
+    width: 34px;
+  }
+}
+
+.topbar-menu .btn-success {
+  padding: 0.5rem 0.95rem;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .topbar-menu .btn-success {
+    width: 100%;
+    text-align: center;
+    padding: 0.65rem 1rem;
+  }
+}
