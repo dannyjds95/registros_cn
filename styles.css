@@ -161,7 +161,7 @@ button:disabled {
   border-left: 5px solid #2563eb;
 }
 
-.kpi-card.ingreso { border-left-color: #16a34a; }
+.kpi-card.ingreso { border-left-color: #64748b; }
 .kpi-card.egreso { border-left-color: #dc2626; }
 .kpi-card.balance { border-left-color: #2563eb; }
 
