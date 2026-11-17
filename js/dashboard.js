@@ -9,7 +9,6 @@ let todosLosRegistros = [];
 
 // Configurar cabecera según usuario
 document.getElementById('user-name').textContent = userData.us_nombre || userData.us_user;
-document.getElementById('user-role').textContent = userData.us_tipo;
 
 // Habilitar filtro de usuarios para TODOS los roles
 document.getElementById('filtro-usuario').style.display = 'inline-block';
