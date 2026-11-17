@@ -533,3 +533,93 @@ tr:hover {
   width: 100%;
   box-sizing: border-box;
 }
+
+
+/* Menú responsive en barra superior */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.topbar-brand {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.topbar-menu {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.menu-toggle {
+  display: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 8px;
+  font-size: 1.35rem;
+  line-height: 1;
+  padding: 0.45rem 0.75rem;
+  cursor: pointer;
+  width: auto;
+}
+
+.menu-toggle:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+@media (max-width: 768px) {
+  .topbar {
+    padding: 0.9rem 1rem;
+  }
+
+  .topbar-brand {
+    width: 100%;
+  }
+
+  .topbar-brand h1 {
+    font-size: 1.2rem;
+    margin: 0;
+  }
+
+  .menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .topbar-menu {
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    margin-top: 0.85rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    gap: 0.65rem;
+  }
+
+  .topbar-menu.open {
+    display: flex;
+  }
+
+  .topbar-menu .user-greeting {
+    font-size: 0.95rem;
+    padding: 0.2rem 0;
+  }
+
+  .topbar-menu .role-badge {
+    align-self: flex-start;
+  }
+
+  .topbar-menu .btn-topbar-secondary,
+  .topbar-menu .btn-logout {
+    width: 100%;
+    text-align: center;
+    padding: 0.65rem 1rem;
+  }
+}

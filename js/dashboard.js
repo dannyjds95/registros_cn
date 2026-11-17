@@ -466,3 +466,26 @@ formPassword.addEventListener('submit', async (e) => {
     btnGuardar.textContent = 'Actualizar contraseña';
   }
 });
+
+// Menú desplegable en dispositivos móviles
+const btnMenuMovil = document.getElementById('btn-menu-movil');
+const topbarMenu = document.getElementById('topbar-menu');
+
+if (btnMenuMovil && topbarMenu) {
+  btnMenuMovil.addEventListener('click', (e) => {
+    e.stopPropagation();
+    topbarMenu.classList.toggle('open');
+  });
+
+  // Cerrar menú al abrir el modal de contraseña
+  document.getElementById('btn-cambiar-pass').addEventListener('click', () => {
+    topbarMenu.classList.remove('open');
+  });
+
+  // Cerrar menú si se toca fuera de la barra superior
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.topbar')) {
+      topbarMenu.classList.remove('open');
+    }
+  });
+}
